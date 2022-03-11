@@ -114,7 +114,7 @@ article {
 .mainImg{
 	width:265px;
 	height:170px;
-	object-fit:cover;
+	object-fit:fill;
 }
 
 .product_info {
@@ -131,9 +131,6 @@ article {
   display: flex;
   right: 0px;
   color: rgb(193, 122, 241);
-}
-.rating2 {
-  clip: rect(0px, 81px, 18px, 0);
 }
 .page {
   text-align: center;

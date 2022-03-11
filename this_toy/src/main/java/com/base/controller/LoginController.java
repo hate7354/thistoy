@@ -1,29 +1,32 @@
 package com.base.controller;
 
-import java.util.Locale;
+import java.io.IOException;
+import java.util.Random;
+import java.util.UUID;
 
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import javax.mail.internet.MimeMessage;
 import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
 
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.base.entity.UserVO;
@@ -31,6 +34,15 @@ import com.base.service.user.UserService;
 import com.base.session.AuthInfo;
 import com.base.session.IdPasswordNotMatchingException;
 import com.base.session.LoginCommand;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.scribejava.core.builder.ServiceBuilder;
+import com.github.scribejava.core.model.OAuth2AccessToken;
+import com.github.scribejava.core.model.OAuthRequest;
+import com.github.scribejava.core.model.Response;
+import com.github.scribejava.core.model.Verb;
+import com.github.scribejava.core.oauth.OAuth20Service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j;
@@ -43,37 +55,12 @@ public class LoginController {
 	
 	private final UserService userService;
 	
-//	@RequestMapping(value = "/home", method = RequestMethod.GET)
-//	public String home(Locale locale, Model model,HttpSession session) {
-//		// 세션에 있는 정보를 담아준다.
-//		model.addAttribute("userType", (String)session.getAttribute("userType") );
-//		return "/home";
-//	}
 	
 	@GetMapping("/login")
 	public String loginGET() {
 		System.out.println("로그인 페이지");
 		return "/login/login";
 	}
-//	@RequestMapping("/logincheck")
-////	public Model loginCheck() {
-//		public ModelAndView loginCheck(@ModelAttribute UserVO vo, HttpSession session,Model model){
-//		boolean result = userService.loginCheck2(vo, session);
-//		ModelAndView mav = new ModelAndView();
-////		model.addAttribute(null, model);
-//		//로그인성공시
-//		if(result ==true) {
-//			mav.setViewName("/main/main");
-//			mav.addObject("mlc","success");
-//		}else { //실패시
-//			mav.setViewName("/login/login");
-//			mav.addObject("mlc","fail");
-//		}
-//		return mav;
-//	}
-	
-	
-	
 	//기존 로그인 메소드
 	@RequestMapping(value = "/loginsuccess", method = RequestMethod.POST)
 	public String loginSuccess(@Valid LoginCommand loginCommand, BindingResult bindingResult,
@@ -84,18 +71,18 @@ public class LoginController {
 		}
 		try {
 			AuthInfo authInfo = userService.loginAuth(loginCommand);
-			session.setAttribute("authInfo", authInfo);
+      
+			String userId = authInfo.getUserId();
+			session.setAttribute("userId", userId);
+
 		} catch (IdPasswordNotMatchingException e) {
 			return "/login/loginfail";
 		}
-		return "/main";
+		return "redirect:/";
 	} //기존 로그인 
 	
 	
-//	@GetMapping("/logincheck")
-//	public void loginCheck() {
-//		System.out.println("로그인 성공");
-//	}
+	
 	@GetMapping("/loginsuccess")
 	public void loginsuccess() {
 		System.out.println("로그인 GET 성공");
@@ -107,41 +94,103 @@ public class LoginController {
 		System.out.println("로그아웃 GET");
 		return "redirect:/";
 	}
-	
-	@GetMapping("/navercall")
-	public @ResponseBody String naverCallback(String code) { //@ResponseBody  ) data를 리턴해주는 컨트롤러 함수
-		System.out.println("네이버 콜백 페이지 띄움");
-//		// CSRF 방지를 위한 상태 토큰 검증 검증
-//		// 세션 또는 별도의 저장 공간에 저장된 상태 토큰과 콜백으로 전달받은 state 파라미터의 값이 일치해야 함
-//		// 콜백 응답에서 state 파라미터의 값을 가져옴
-//		String state = request.queryParams(“state”);
-//		// 세션 또는 별도의 저장 공간에서 상태 토큰을 가져옴
-//		String storedState = request.session().attribute(“state”);
-//		if( !state.euals( storedState ) ) {
-//		    return RESPONSE_UNAUTHORIZED; //401 unauthorized
-//		} else {
-//		    Return RESPONSE_SUCCESS; //200 success
-//		}
-		return "네이버인증완료naver";
-	}
-	
-	@GetMapping("/kakaocallback")
-	public @ResponseBody String kakaoCallback(String code) { //@ResponseBody  ) data를 리턴해주는 컨트롤러 함수
-		System.out.println("카카오로그인 페이지 띄움");
-//		post방식으로 key=value 데이터 요청해야함 (카카오로)
-//		 예전자바에선 HttpsURLConnection url =new Http~ 로쓰기도함 (불편)  , Retrofit2 라이브러리, OkHttp 라이브러리 등등 있다
-		//http요청 편하게할수있는 라이브러리
-		RestTemplate rt = new RestTemplate();   
-		HttpHeaders headers = new HttpHeaders();
-		headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8"); //헤더에 컨텐트타입을 담는다는 의미는  내가 전송할 http body 데이터가 key value 데이터라고 알려줌
-		
-		MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-		params.add("grant_type", "authorization_code");  //원래는 값들을 변수로 바꿔서 넣는게 좋음
-		params.add("client_id", "46578e2a852ca11289c2da8422acc9ca");
-		params.add("redirect_uri", "http://localhost:9090/login/kakaocallback");
-		params.add("code", "authorization_code");
-		
-		return "kakao done CODE  : "+code;
-	}
 
+	
+	
+	//비밀번호 찾기 메일인증 이용해서 만들려고 했는데 지워도 됨
+	@RequestMapping("/findpw")
+	public void findPassword() throws Exception {
+		
+	}
+	@PostMapping("/findpwcheck")
+	public String findpwcheck(UserVO vo , RedirectAttributes rttr) {
+		String userId = vo.getUserId();
+		int rs = userService.idCheck(vo);
+		if(rs == 0) {
+			System.out.println("결과 : "+rs);
+			rttr.addFlashAttribute("fail","틀림");
+			return "redirect:/login/findpw";
+		} else {
+			rttr.addAttribute("userId",userId);
+			return "redirect:/login/pwchange";
+		}
+		
+	}
+	
+	@GetMapping("/pwchange")
+	public void pwchange(@RequestParam(value = "userId") String userId, Model model) {
+		model.addAttribute("userId",userId);
+		
+	}
+	
+	@PostMapping("/pwchangesuccess")
+	public String pwchangesuccess(UserVO vo , RedirectAttributes rttr){
+		String userId = vo.getUserId();
+		userService.passwdUpdate(vo);
+		rttr.addFlashAttribute("passupdate","성공");
+		return "redirect:/";
+	}
+	
+	private final JavaMailSender mailSender;
+	@GetMapping("/findpassword")
+	@ResponseBody
+	public String findPasswordPOST(String semail) throws Exception {
+		
+
+		System.out.println("비번찾기 메일보냄페이지");
+		System.out.println("이메일: " + semail);
+		Random random = new Random();
+		int num = random.nextInt(8999)+1000;
+		System.out.println("인증번호 :" + num);
+		
+		
+		String setFrom = "gihadaim@gmail.com";
+		String toMail = semail;
+		String title = "디스토이 비밀번호찾기 인증번호입니다.";
+		String content = " 비밀번호 인증번호는     "+num+"     입니다.";
+		try {
+			MimeMessage message = mailSender.createMimeMessage();
+			MimeMessageHelper helper = new MimeMessageHelper(message, true, "utf-8");
+			helper.setFrom(setFrom);
+			helper.setTo(toMail);
+			helper.setSubject(title);
+			helper.setText(content, true);
+			mailSender.send(message);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		String Checkcode = Integer.toString(num);
+		
+		return Checkcode;
+	}
+	
+	@RequestMapping(value="/socailLogin", method = RequestMethod.GET)
+	public String socialLogin(UserVO vo, HttpSession session) {
+		System.out.println(vo);
+		String email = vo.getUserId();
+		String social = vo.getUserSocial();
+		System.out.println(email);
+		System.out.println(social);
+
+		int rs = userService.selectSocialLogin(vo);
+		if(rs == 0) {
+			int res = userService.insertSocialLogin(vo);
+			System.out.println("결과 : "+res);
+		}
+
+		session.setAttribute("userId", vo.getUserId());
+		
+		return "redirect:/";
+	}
+	
+	@RequestMapping(value="/navercallback", method = RequestMethod.GET)
+	public String naverCallback() {
+		return "/login/navercallback";
+	}
+	
+	
+	
+	
+	
 }// 클래스 종료

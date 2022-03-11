@@ -1,10 +1,6 @@
 package com.base.service.user;
 
-import java.util.List;
-
-import javax.servlet.http.HttpSession;
-
-import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.annotations.Mapper;
 import org.springframework.stereotype.Service;
 
 import com.base.entity.UserVO;
@@ -23,11 +19,6 @@ public class UserServiceImpl implements UserService {
 
 	private final UserMapper userMapper;
 
-	@Override
-	public UserVO login(UserVO userVO) {
-
-		return userMapper.login(userVO);
-	}
 
 	// 회원가입
 	@Override
@@ -35,23 +26,31 @@ public class UserServiceImpl implements UserService {
 		userMapper.register(userVO);
 	}
 
+	// 회원가입시 id중복확인
 	@Override
 	public int idCheck(UserVO userVO) {
 		int result = userMapper.idCheck(userVO);
 		return result;
 	}
-
+	// 회원가입시 메일중복확인
+		@Override
+		public int emailCheck(UserVO userVO) {
+			int result = userMapper.emailCheck(userVO);
+			return result;
+		}
+		
 	@Override
 	public AuthInfo loginAuth(LoginCommand loginCommand) {
 		UserVO user = userMapper.selectById(loginCommand.getUserId());
+		System.out.println("서비스유저" + user);
 		if (user == null) {
 			throw new IdPasswordNotMatchingException();
 		}
 		if (!user.matchPassword(loginCommand.getUserPasswd())) {
 			throw new IdPasswordNotMatchingException();
 		}
-		return new AuthInfo(user.getUserId(), user.getUserName(), user.getUserEmail(), user.getUserTel(),
-				user.getUserAddressPost(), user.getUserAddress(), user.getUserAddressDetail());
+		return new AuthInfo(user.getUserId()
+				);
 	}
 
 	// 개인정보수정
@@ -78,11 +77,38 @@ public class UserServiceImpl implements UserService {
 			System.out.println("수정비번틀림");
 			throw new IdPasswordNotMatchingException();
 		}
-		// 기본
-//      return new AuthInfo(user.getUserId(), user.getUserName());
-		// 유저수정 페이지 위해서 다른 정보들도 넣음
-		return new AuthInfo(user.getUserId(), user.getUserName(), user.getUserEmail(), user.getUserTel(),
-				user.getUserAddressPost(), user.getUserAddress(), user.getUserAddressDetail());
+		return new AuthInfo(user.getUserId());
+	}
+	
+	
+	
+	@Override
+	public UserVO getmodify(String userId) {
+		
+		return userMapper.getmodify(userId);
+	}
+	
+	@Override
+	public int insertSocialLogin(UserVO vo) {
+		// TODO Auto-generated method stub
+		return userMapper.insertSocialLogin(vo);
+	}
+	@Override
+	public int selectSocialLogin(UserVO vo) {
+		// TODO Auto-generated method stub
+		return userMapper.selectSocialLogin(vo);
+	}
+	@Override
+	public int passwdUpdate(UserVO vo) {
+		// TODO Auto-generated method stub
+		return userMapper.passwdUpdate(vo);
 	}
 
+	@Override
+	public int deleteUser(String userId) {
+		// TODO Auto-generated method stub
+		return userMapper.deleteUser(userId);
+	}
+	
+	
 }

@@ -49,8 +49,7 @@ $(function () {
 			},
 			userTel: {
 				required: true,
-				digits: true,
-				regex: "^(010|011)[-\\s]?\\d{3,4}?\\d{4}$"
+				regex: "^01(?:0|1[6-9])[-](\\d{3}|\\d{4})[-](\\d{4})$"
 			}
 		},
 
@@ -66,7 +65,7 @@ $(function () {
 			userPasswd: {
 				required: "비밀번호는 필수 입력입니다.",
 				minlength: "최소 8자리 이상 입력해주세요",
-				regex: "비밀번호에 3특수문자/문자/숫자를 포함해주세요",
+				regex: "비밀번호에 특수문자/문자/숫자를 포함해주세요",
 				maxlength: "15자리 이하로 입력하세요"
 			},
 			password2: {
@@ -93,7 +92,6 @@ $(function () {
 			},
 			userTel: {
 				required: "휴대폰 번호를 입력하세요",
-				digits: "숫자만 입력하세요",
 				regex: "전화번호 양식이 잘못되었습니다"
 			}
 		},

@@ -56,50 +56,82 @@
 			<div class="txt-section">
 				<div class="txt-title">
 					<c:out value="${product.productName}" />
+					<form action="/product/delete" method="post" class="pd_delete">
+						<c:if test="${userId eq product.userId || userId eq 'admin'}">
+							<input type="hidden" name="pc" value="${product.productCode}" />
+							<button type="button" class="product_delete">삭제</button>
+						</c:if>
+					</form>
 				</div>
 				<div class="txt-main">
-					<table>
-						<tr>
-							<th><span>판매가</span></th>
-							<td>
-								<div class="price">
-									<c:out value="${product.productPrice}" />
-								</div>
-							</td>
-						</tr>
-						<tr>
-							<th><span>판매자</span></th>
-							<td><c:out value="${product.userId}" /></td>
-						</tr>
-						<tr>
-							<th><span>카테고리</span></th>
-							<td>피규어</td>
-						</tr>
-						<tr>
-							<th><span>재고</span></th>
-							<td><div class="stock">
-									<c:out value="${product.productStock}" />
-								</div>개</td>
-						</tr>
-						<tr>
-							<th><span>주문수량</span></th>
-							<td><input type="number" class="product_num" value="1"
-								oninput="inputnumber();" min="1" max="10" readonly />
-								<button type="button" class="ea_btn" onclick="plus()">+</button>
-								<button type="button" class="ea_btn" onclick="minus()">-</button>
-							</td>
-						</tr>
-						<tr>
-							<th><span>총합</span></th>
-							<td>
-								<div class="total">원</div>
-							</td>
-						</tr>
-					</table>
+					<form action="/orders/cart" method="post" class="direct_order">
+						<table>
+							<tr>
+								<th><span>판매자</span></th>
+								<td class="seller"><c:out value="${product.userId}" /></td>
+							</tr>
+							<tr>
+								<th><span>판매가</span></th>
+								<td>
+									<div class="price">
+										<c:out value="${product.productPrice}" />
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<th><span>카테고리</span></th>
+								<td>${product.downCaName}</td>
+							</tr>
+							<tr>
+								<th><span>재고</span></th>
+								<td><div class="stock">
+										<c:choose>
+											<c:when test="${product.productStock == 0}">
+												재고가 없습니다
+											</c:when>
+											<c:otherwise>
+											<c:out value="${product.productStock}" />
+											</div>개</td>
+											</c:otherwise>
+										</c:choose>
+									
+							</tr>
+							<tr>
+								<th><span>주문수량</span></th>
+								<td>
+									<c:choose>
+									<c:when test="${product.productStock == 0}">
+										재고가 없습니다
+									</c:when>
+									<c:otherwise>
+									<input type="number" class="product_num" value="1" name="st" oninput="inputnumber();" min="1" max="10" readonly />
+									<button type="button" class="ea_btn" onclick="plus()">+</button>
+									<button type="button" class="ea_btn" onclick="minus()">-</button>
+									</c:otherwise>
+									</c:choose>
+								</td>
+							</tr>
+							<tr>
+								<th><span>총합</span></th>
+								<td>
+									<div class="total">원</div>
+								</td>
+							</tr>
+						</table>
+						<input type="hidden" name="pdc" value="${product.productCode}" />
+					</form>
 				</div>
 				<div class="detail-head-button">
-					<button class="directbuy">바로구매</button>
-					<button class="cart">장바구니</button>
+					<c:choose>
+						<c:when test="${product.productStock == 0}">
+							<button type="button" class="directbuy" style="background-color: gray;" disabled/>바로구매</button>
+							<button type="button" class="cart" style="background-color: gray; color:white; border : none;" disabled/>장바구니</button>
+						</c:when>
+						<c:otherwise>
+							<button type="button" class="directbuy">바로구매</button>
+							<button type="button" class="cart">장바구니</button>
+						</c:otherwise>
+					</c:choose>
 					<c:forEach var="ws" items="${wish}">
 						<c:if test="${!empty userId}">
 							<c:if test="${userId==ws.userId}">
@@ -107,11 +139,10 @@
 							</c:if>
 						</c:if>
 					</c:forEach>
-					<button class="hart">하트</button>
+					<button type="button" class="hart">하트</button>
 				</div>
 			</div>
 		</div>
-
 		<!-- 메인 1 끝 -->
 
 		<!-- 메인 2 시작 -->
@@ -155,10 +186,15 @@
 					<option value="2">&#xf005&#xf005
 					<option value="1">&#xf005</option>
 				</select>
+				<c:forEach var="order" items="${order}">
+				<c:if test="${order.productCode eq product.productCode}">
+				<input type="hidden" class="canReview"/>
+				</c:if>
+				</c:forEach>
 				<button class="review_register">등록</button>
 			</div>
 			<div class="title">
-				<span>상품리뷰 (<span class="review">${pageMaker.total} </span>)
+				<span>상품리뷰 (<span class="review">${pageMaker.total}</span>)
 				</span>
 
 			</div>
@@ -167,7 +203,7 @@
 					<th>별점</th>
 					<th>내용</th>
 					<th>작성자</th>
-					<th>작성시간</th>
+					<th>작성일</th>
 					<th></th>
 				</tr>
 				<c:forEach var="rv" items="${review}">
@@ -182,7 +218,7 @@
 						<td><fmt:formatDate var="date" value="${rv.reviewDate}"
 								pattern="yyyy.MM.dd" /> ${date}</td>
 						<c:if
-							test="${userId.equals(rv.userId) or userId.equals(product.userId)}">
+							test="${userId eq rv.userId or userId eq product.userId or userId eq 'admin'}">
 							<td><button class="delete_review" value="${rv.reviewCode}">삭제</button></td>
 						</c:if>
 					</tr>
@@ -223,24 +259,30 @@
 					<th>답변상태</th>
 					<th>내용</th>
 					<th>작성자</th>
-					<th>작성시간</th>
+					<th>작성일</th>
 					<th></th>
 				</tr>
 				<c:forEach var="Qn" items="${QnA}">
 					<input type="hidden" value="${Qn.questionCode}" />
 					<tr class="QnAbox">
 						<td>${Qn.replySituation}</td>
-						<td class="QnAText"><c:out value="${Qn.questionText}" /></td>
+						<td class="QnAText">
+						<c:if test="${userId ne Qn.userId and userId ne 'admin'}">
+						비밀글 입니다.
+						</c:if>
+						<c:if test="${userId eq Qn.userId || userId eq 'admin'}">
+						<c:out value="${Qn.questionText}" />
+						</c:if></td>
 						<td>${Qn.userId}</td>
 						<td><fmt:formatDate var="date" value="${Qn.questionDate}"
 								pattern="yyyy.MM.dd" /> ${date}</td>
 						<c:if
-							test="${userId.equals(Qn.userId) or userId.equals(product.userId)}">
+							test="${userId eq Qn.userId or userId eq product.userId or userId eq 'admin'}">
 							<td><button class="delete_QnA" value="${Qn.questionCode}">삭제</button></td>
 						</c:if>
 					</tr>
 					<c:if
-						test="${!userId.equals(product.userId) and !empty Qn.replyText and !userId.equals(Qn.userId)}">
+						test="${userId eq Qn.userId and userId ne product.userId  and !empty Qn.replyText}">
 						<tr>
 							<td></td>
 							<td class="reply_td" colspan="3"><i class="fas fa-reply"></i>
@@ -248,7 +290,7 @@
 						</tr>
 					</c:if>
 					<c:if
-						test="${(userId==product.userId || userId== Qn.userId) and !empty userId and !empty Qn.replyText}">
+						test="${(userId eq product.userId || userId eq 'admin') and !empty Qn.replyText}">
 						<tr>
 							<td></td>
 							<td class="reply_td" colspan="3"><i class="fas fa-reply"></i>
@@ -262,7 +304,7 @@
 						</tr>
 					</c:if>
 					<c:if
-						test="${userId.equals(product.userId) and !empty userId and empty Qn.replyText}">
+						test="${(userId eq product.userId || userId eq 'admin') and empty Qn.replyText}">
 						<tr>
 							<td></td>
 							<td class="reply_td" colspan="3"><i class="fas fa-reply"></i>
@@ -282,25 +324,53 @@
 			<span class="addQnA">더보기</span>
 		</div>
 		<div class="detail-content">
-			<div class="title">
-				<span class="another">배송/교환/환불 (1)</span>
-				<button>문의하기</button>
+			<div class="title last">
+				<div class="another"><span class="another">배송/교환/환불</span></div>
+				<table id="lasttable" style="border: 1px solid black;">
+					<tr>
+						<th style="width:150px; padding: 20px;">반품배송비</th>
+						<td style="padding: 15px;">반품 배송비 무료!</td>
+						<th style="width:150px; padding: 20px;">교환배송비</th>
+						<td style="padding: 15px;">교환 배송비 무료!</td>
+					</tr>
+					<tr>
+						<th style="width:150px; padding: 20px;">보내실 곳</th>
+						<td style="padding: 15px;" colspan="3">경기도 안양시 만안구 안양동 782-68 (우:14001)</td>
+					</tr>
+					<tr>
+						<th style="width:120px; padding: 20px;" rowspan="2">반품/교환 사유 &nbsp;&nbsp;기간</th>
+						<td style="padding: 15px;" colspan="3">구매자 단순변심은 상품 수령 후 7일 이내(이후 구매자 반품배송비 부담)</td>
+					</tr>
+					<tr>
+						<td style="padding: 15px;" colspan="3">표시/광고와 상이, 광고와 다른 사실을 안 날로부터 30일 (판매자 반품 배송비 부담) 둘 중 하나가 경과시 반품/교환 불가</td>
+					</tr>
+					<tr>
+						<th style="width:150px; padding: 20px;" rowspan="7">반품/교환 불가능 사유</th>
+						<td style="padding: 15px;" colspan="3">반품요청기간이 지난 경우</td>
+					</tr>
+					<tr>
+						<td style="padding: 15px;" colspan="3">구매자의 책임 있는 사유로 상품 등이 멸실 또는 훼손된 경우</td>
+					</tr>
+					<tr>
+						<td style="padding: 15px;" colspan="3">구매자의 책임있는 사유로 포장이 훼손되어 상품 가치가 상실된 경우</td>
+					</tr>
+					<tr>
+						<td style="padding: 15px;" colspan="3">구매자의 사용 도는 일부 소비에 의하여 상품의 가치가 감소한 경우</td>
+					</tr>
+					<tr>
+						<td style="padding: 15px;" colspan="3">시간의 경과에 의하여 재판매가 곤란할 정도로 상품 등의 가치가 감소한 경우</td>
+					</tr>
+					<tr>
+						<td style="padding: 15px;" colspan="3">고객의 요청상항에 맞춰 제작에 들어가는 맞춤제작상품의 경우</td>
+					</tr>
+					<tr>
+						<td style="padding: 15px;" colspan="3">복제가 가능한 상품 등의 포장을 훼손한 경우</td>
+					</tr>
+				</table>
 			</div>
-			<table>
-				<tr>
-					<th>번호</th>
-					<th>내용</th>
-					<th>작성시간</th>
-					<th>작성자</th>
-				</tr>
-				<tr>
-					<td>1</td>
-					<td>재뷘이 재뷘이 재뷘이 재뷘이 재뷘이 세빈이 ^^</td>
-					<td>2021-07-14</td>
-					<td>이진웅</td>
-				</tr>
-			</table>
 		</div>
+		<input type="hidden" value="${(empty userId)? null:userId}"
+			class="user" />
 		<!-- 메인 2 끝 -->
 
 	</div>
@@ -309,6 +379,13 @@
 	<!-- 	<script src="/js/index.js" defer></script> -->
 	<script src="/js/detail-slide.js?ver=1" defer></script>
 	<script type="text/javascript" defer>
+	let rv=false;
+	if($('input').hasClass('canReview')){
+		rv=true;
+	}
+	console.log(rv);
+	let myName = $('.user').val();
+	let seller=$('.seller').text();
 		$(".fa-angle-right").click(function(){
 			let lastn=Number($(".pn").last().text())+1;
 			location.href="/product/detail_main?pc=${product.productCode}&p="+lastn;
@@ -325,16 +402,28 @@
 		}
 		}
 		$(document).on('click','.delete_review',function(){
+			let ok=confirm('리뷰를 삭제하시겠습니까?');
+			if(ok==true){
 			let reviewNum = $(this).val();
-			location.href="/review/delete?rc="+reviewNum+"&pc=${QnA[0].productCode}";
+			location.href="/review/delete?rc="+reviewNum+"&pc=${product.productCode}";
+			}
 		})
 		$(document).on('click','.delete_QnA',function(){
+			let ok=confirm('문의내용을 삭제하시겠습니까?');
+			if(ok==true){
 			let QnANum = $(this).val();
-			location.href="/QnA/delete?qc="+QnANum+"&pc=${QnA[0].productCode}";
+			location.href="/QnA/delete?qc="+QnANum+"&pc=${product.productCode}";
+			}
 		})
 		$(document).on('click','.register_button',function(){
 			let registerindex = $(".register_button").index(this);
-			location.href="/QnA/reply?qc="+$(this).val()+"&rt="+$('.reg').eq(registerindex).val()+"&pc=${QnA[0].productCode}";
+			location.href="/QnA/reply?qc="+$(this).val()+"&rt="+$('.reg').eq(registerindex).val()+"&pc=${product.productCode}";
+		})
+		$(document).on('click','.product_delete',function(){
+			let ok = confirm('판매글을 삭제하시겠습니까?');
+			if(ok==true){
+				$('.pd_delete').submit();
+			}
 		})
 		if($('input').hasClass('wishtrue')){
 			$('.hart').css('background-color','red');
@@ -342,8 +431,11 @@
 		$(".directbuy")
 				.click(
 						function() {
-							location.href = "/orders/direct?pdc=${product.productCode}&user=${userId}&st="
-									+ $(".product_num").val();
+							if(myName==null || myName==''){
+								alert("로그인이 필요한 기능입니다.");
+								return;
+							}
+							$('.direct_order').submit();
 						})
 		/* ----------------------- 리뷰 작성 ajax 및 작성글 바로 띄우기 ----------------------   */
 		$(document).on('click',".review_register",function() {
@@ -365,12 +457,21 @@
 				$(".write_text").val("");
 				return;
 			}
+			if(rv==false){
+				alert('상품을 구매하신분만 입력가능합니다.');
+				$(".write_text").val("");
+				return;
+			}
 			$.ajax({
 				type : 'post',
 				url : '/review/new',
 				data : JSON.stringify(data),
 				contentType : "application/json; charset=utf-8",
 				success : function(result) {
+					if(result=="이미 리뷰를 작성하였습니다."){
+						alert(result);
+						return;
+					}
 					alert('리뷰를 등록하였습니다.');
 					let pn="";
 					let lastnum=Number(${pageMaker.endPage});
@@ -415,7 +516,6 @@
 						$(".reviewlist").nextAll().last().remove();
 					}
 					$(".review").html(rvNum);
-					$(".file-button").text("+사진추가");
 					
 					$('.pn').first().css('color', 'rgba(245, 96, 153, 0.9)');
 				},
@@ -462,11 +562,10 @@
 					'<td>'+data["questionText"]+'</td>'+
 					'<td>'+data["userId"]+'</td>'+
 					'<td>'+dateString+'</td>'+
+					'<td><button class="delete_review" value="'+rs.reviewCode+'">삭제</button><td></tr>'+
 					'</tr>';
 					$(".QnInfo").after(newQnA);
 					$('.QnA').html(QnANum);
-					alert(rs);
-					
 				},
 				error : function(er) {
 					alert(er);
@@ -482,36 +581,39 @@
 				contentType : "application/json; charset=utf-8",
 				success : function(rs) {
 					$('.QnAtotal').html('');
-					let QnAbox='<tr class="QnInfo"><th>답변상태</th><th>내용</th><th>작성자</th><th>작성시간</th><th></th></tr>';
+					let QnAbox='<tr class="QnInfo"><th>답변상태</th><th>내용</th><th>작성자</th><th>작성일</th><th></th></tr>';
 					for(let i=0; i<rs.length; i++){
 					QnAbox += '<input type="hidden" value="'+rs[i].questionCode+'"/>'+
 						'<tr class="QnAbox"><td>'
 						+ rs[i].replySituation
-						+ '</td><td>'
-						+ rs[i].questionText
-						+ '</td><td>'
-						+ rs[i].userId
+						+ '</td><td>';
+						if(myName==rs[i].userId || myName == 'admin'){
+							QnAbox += rs[i].questionText + '</td><td>';
+						}else{
+							QnAbox += '비밀글 입니다.</td><td>';
+						}
+						QnAbox += rs[i].userId
 						+ '</td><td>'
 						+ moment(
 								rs[i].questionDate)
 								.format(
 										"YYYY.MM.DD")
 						+ '</td>';
-						if(${userId.equals(rs[i].userId) or userId.equals(product.userId)}){
+						if(myName==(rs[i].userId) || myName==seller || myName=='admin'){
 							QnAbox+='<td><button class="delete_QnA" value="'+rs[i].questionCode+'">삭제</button></td></tr>';
 						}
-					if(${!userId.equals(product.userId)} && rs[i].replyText != null && ${!userId.equals(Qn.userId)}){
+					if(myName==rs[i].userId && rs[i].replyText != null){
 						QnAbox += '<tr class="clickText"><td></td>'+
 						'<td class="reply_td" colspan="3"><i class="fas fa-reply"></i>'+
 							'<textarea cols="30" rows="2" class="reply_text" readonly>'+rs[i].replyText+'</textarea></td></tr>';
-					}else if(${userId.equals(product.userId) and !empty userId} && rs[i].replyText!=null || ${userId.equals(Qn.userId)}){
+					}else if((myName==seller || myName=='admin') && rs[i].replyText!=null){
 						QnAbox += '<tr class="clickText"><td></td>+'
 						+'<td class="reply_td" colspan="3"><i class="fas fa-reply"></i>'+
 							'<textarea cols="30" rows="2" class="reply_text" readonly>'+rs[i].replyText+'</textarea></td></tr>'+
 					'<tr class="clickText">'+
 						'+<td colspan="4" class="reply_button"><button class="delete_button" value="'+rs[i].questionCode+'">삭제</button></td>'+
 					'</tr>'
-					}else if(${userId.equals(product.userId) and !empty userId} && rs[i].replyText == null){
+					}else if((myName==seller || myName=='admin') && rs[i].replyText == null){
 						QnAbox += 
 						'<tr class="clickText">'+
 							'<td></td>'+
@@ -533,6 +635,10 @@
 		})
 		/* ----------------------- 답글 삭제 ajax ----------------------------------*/
 		$(document).on('click','.delete_button',function(){
+			let ok=confirm('문의답글을 삭제하시겠습니까?.');
+			if(ok==false){
+				return;
+			}
 			let questionCode= $(this).val();
 			let code=$(this).parent().parent().prev().prev().prev().val();
 			$(this).parent().parent().prev().prev().children().first().html('답변대기');
@@ -553,7 +659,6 @@
 				contentType : "application/json; charset=utf-8",
 				success : function(rs) {
 					alert(rs);
-					
 				},
 				error : function(er) {
 					alert(er);
@@ -644,7 +749,7 @@
 										success : function(result) {
 											let rvtable = "";
 											let starRating = "";
-											rvtable += '<tr class="reviewlist"><th>별점</th><th>내용</th><th>작성자</th><th>작성시간</th><th></tr></tr>';
+											rvtable += '<tr class="reviewlist"><th>별점</th><th>내용</th><th>작성자</th><th>작성일</th><th></tr></tr>';
 											$(".reviewAll").html("");
 											for (let i = 0; i < result.length; i++) {
 												
@@ -666,9 +771,9 @@
 																result[i].reviewDate)
 																.format(
 																		"YYYY.MM.DD")
-														+ '</td>'
-														if(${userId.equals(result[i].userId) or userId.equals(product.userId)}){
-														+'<td><button class="delete_review" value="'+result[i].reviewCode+'">삭제</button></tr>';
+														+ '</td>';
+														if(myName == result[i].userId){
+															rvtable += '<td><button class="delete_review" value="'+result[i].reviewCode+'">삭제</button><td></tr>';
 														}
 											}
 											$(".reviewAll").html(rvtable);

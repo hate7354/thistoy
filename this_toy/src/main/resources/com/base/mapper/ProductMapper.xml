@@ -8,8 +8,8 @@
 	<insert id="insert">
 	<![CDATA[
 	insert into product 
-	(product_code,product_name,product_price,product_main_img,product_text,product_stock,down_ca_code,user_id,product_info_img) values
-	(#{downCaCode}||pd_code_seq.nextval,#{productName},#{productPrice},#{productMainImg},#{productText},#{productStock},
+	(product_code,product_name,product_price,product_main_img,product_stock,down_ca_code,user_id,product_info_img) values
+	(#{downCaCode}||pd_code_seq.nextval,#{productName},#{productPrice},#{productMainImg},#{productStock},
 	#{downCaCode},#{userId},#{productInfoImg})
 	]]>
 	</insert>
@@ -68,9 +68,12 @@
 			</otherwise>
 		</choose>
 	</select>
+	<delete id="deleteProduct">
+	delete from product where product_code = #{productCode}
+	</delete>
 	<select id="getProduct" resultType="ProductVO">
-		select * from product where
-		product_code = #{productCode}
+		select b.down_ca_name, a.* from product a,down_category b where
+		a.product_code = #{productCode} and a.down_ca_code=b.down_ca_code
 	</select>
 	<insert id="insertCart">
 	insert into cart values(cart_seq.nextval,#{productEa},#{productCode},#{userId})

@@ -30,7 +30,7 @@
 			<div class="wrap wd668">
 				<div class="container">
 					<div class="form_txtInput">
-						<form id="form" class="form" method="post">
+						<form id="form" class="form" method="post" enctype="multipart/form-data">
 							<p class="exTxt">회원가입시 이메일 인증을 반드시 진행하셔야 합니다.</p>
 							<div class="join_form">
 								<table>
@@ -41,8 +41,8 @@
 									<tbody>
 										<tr class="form-control">
 											<th><span>이미지</span></th>
-											<td><input type="file" name="img"
-												placeholder="아이디를 입력하세요." required></td>
+											<td><input type="file" name="file"
+												 required></td>
 											<td></td>
 										</tr>
 										<tr class="form-control">
@@ -59,8 +59,8 @@
 										</tr>
 										<tr class="form-control">
 											<th><span>비밀번호</span></th>
-											<td><input type="password" id="password" name="userPasswd"
-												placeholder="특수문자/문자/숫자 포함 8자리 이상 입력하세요."></td>
+											<td><input type="password" id="password"
+												name="userPasswd" placeholder="특수문자/문자/숫자 포함 8자리 이상 입력하세요."></td>
 											<td></td>
 										</tr>
 										<tr class="form-control">
@@ -72,22 +72,26 @@
 										<tr class="form-control">
 											<th><span>이메일</span></th>
 											<td><input type="email" name="userEmail" id="email"
-												placeholder="예)abc@abc.com" required></td>
+												class="mail_input" placeholder="예)abc123@naver.com" required></td>
 											<td>
-												<button class="btn_confirm" onclick="sendEmail()" type="button">인증번호
+												<button class="btn_send"  type="button">인증번호
 													발송</button>
 											</td>
 										</tr>
 										<tr class="form-control">
 											<th><span>인증번호 확인</span></th>
 											<td><input type="text" class="send_number"
-												name="send_number" placeholder="4자리를 입력하세요."></td>
-											<td><button class="btn_send" type="button">확인</button></td>
+												name="send_number" placeholder="인증번호를 정확히 입력하세요."
+												id="mail_check_input" required></td>
+											<td><button class="btn_confirm" type="button">확인</button></td>
+										</tr>
+										<tr class="form-control">
+											<th><span class="code_check"></span></th>
 										</tr>
 										<tr class="form-control">
 											<th><span>휴대폰 번호</span></th>
 											<td><input type="tel" name="userTel"
-												placeholder="번호를 입력하세요."></td>
+												placeholder="예)010-XXXX-XXXX"></td>
 											<td></td>
 										</tr>
 										<tr class="form-control">
@@ -97,8 +101,9 @@
 												type="text" placeholder="우편번호" readonly onclick="findAddr()"><br>
 												<br> <br> <input id="member_addr"
 												name="userAddress" type="text" placeholder="기본주소" readonly><br>
-												<br> <br> <input type="text" name="userAddressDetail"
-												id="member_detail" placeholder="상세 주소"></td>
+												<br> <br> <input type="text"
+												name="userAddressDetail" id="member_detail"
+												placeholder="상세 주소"></td>
 											<td></td>
 										</tr>
 									</tbody>
@@ -108,7 +113,8 @@
 								</div>
 							</div>
 							<div class="btn_wrap">
-								<input type="submit" id="idCheck"  class="button" value="확인">
+								<input type="submit" id="next_button" class="button" value="확인"
+									disabled>
 							</div>
 						</form>
 					</div>
@@ -128,6 +134,13 @@
 	<script src="/js/register-2.js"></script>
 	<script
 		src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+
+	<script type="text/javascript">
+		window.history.forward();
+		function noBack() {
+			window.history.forward();
+		}
+	</script>
 </body>
 
 </html>
